@@ -1481,21 +1481,32 @@ function attachDeptAdminHandlers(admin) {
           showToast("Event updated.");
         }
       } else {
-        const newId = `ev-${String(eventCounter++).padStart(3, "0")}`;
-        events.push({
-          id: newId,
-          name,
-          department: admin.department,
-          place,
-          eventDate,
-          timing,
-          createdByDeptId: admin.id,
-          poster: selectedPosterData || "",
-        });
-        showToast("New event added for your department.");
-      }
+       const newEvent = {
+  name,
+  department: admin.department,
+  place,
+  eventDate,
+  timing,
+  createdByDeptId: admin.id,
+  poster: selectedPosterData || "",
+};
 
-      saveEventsToLocalStorage();
+fetch("/api/events", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify(newEvent)
+})
+.then(res => res.json())
+.then(data => {
+  showToast("Event saved to database ✅");
+})
+.catch(err => {
+  console.error(err);
+  showToast("Error saving event ❌");
+});
+      }
 
       eventIdInput.value = "";
       nameInput.value = "";

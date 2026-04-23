@@ -33,47 +33,7 @@ function getDepartmentOptions(selectedDept = "") {
     .join("");
 }
 
-const students = [
-  {
-    id: "stu-001",
-    role: roles.STUDENT,
-    userId: "stu001",
-    password: "student123",
-    name: "Harini A",
-    registerNumber: "CSE2023-001",
-    department: "CSE",
-    year: "III",
-    email: "harini28.egspec@gmail.com",
-    phone: "+91 98765 00011",
-    classIncharge: "Ms.Kalaivani",
-  },
-  {
-    id: "stu-002",
-    role: roles.STUDENT,
-    userId: "stu002",
-    password: "student123",
-    name: "Lakshana S",
-    registerNumber: "ECE2023-014",
-    department: "ECE",
-    year: "II",
-    email: "lakshana@gmail.com",
-    phone: "+91 98765 00012",
-    classIncharge: "Ms.Mohanapriya",
-  },
-  {
-    id: "stu-003",
-    role: roles.STUDENT,
-    userId: "stu003",
-    password: "student123",
-    name: "Sahithyalakshmi S",
-    registerNumber: "MECH2023-023",
-    department: "MECH",
-    year: "III",
-    email: "sahithya@gmail.com",
-    phone: "+91 98765 00013",
-    classIncharge: "Ms.Ranjani",
-  },
-];
+
 
 const departmentAdmins = [
   {
@@ -221,60 +181,59 @@ const superAdmin = {
   phone: "+91 98765 20001",
 };
 
-function saveRegistrationsToLocalStorage() {
-  localStorage.setItem("registrations", JSON.stringify(registrations));
-}
+// ==========================================
+// 🚀 NEW API CALLS FOR DATABASE (MONGODB)
+// ==========================================
+async function apiRegisterAndOD(eventId, studentId, department) {
+  try {
+    // 1. Save Registration
+    const regRes = await fetch('http://localhost:5000/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ eventId, studentId })
+    });
+    const regData = await regRes.json();
 
-function loadRegistrationsFromLocalStorage() {
-  const storedRegistrations = localStorage.getItem("registrations");
-  if (storedRegistrations) {
-    return JSON.parse(storedRegistrations);
+    if(regData.success) {
+      // 2. Save OD Request 
+      const odRes = await fetch('http://localhost:5000/api/od-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentId: studentId,
+          eventId: eventId,
+          registrationId: regData.data._id, // Database ID
+          department: department
+        })
+      });
+      const odData = await odRes.json();
+      
+      if(odData.success) {
+        showToast("Registration & OD Request Saved in DB! ✅");
+      }
+    }
+  } catch (error) {
+    console.error("DB Error:", error);
+    showToast("Server Connection Failed!");
   }
-  // Return default registrations if no stored data
-  return [
-    {
-      id: "reg-001",
-      eventId: "ev-001",
-      studentId: "stu-001",
-      status: "approved",
-      odApproved: true,
-    },
-    {
-      id: "reg-002",
-      eventId: "ev-002",
-      studentId: "stu-002",
-      status: "pending",
-      odApproved: false,
-    },
-  ];
 }
 
-// OD Requests Management
-function saveODRequestsToLocalStorage() {
-  localStorage.setItem("odRequests", JSON.stringify(odRequests));
-}
-
-function loadODRequestsFromLocalStorage() {
-  const storedODRequests = localStorage.getItem("odRequests");
-  if (storedODRequests) {
-    return JSON.parse(storedODRequests);
+async function fetchStudentDataFromDB(studentId) {
+  try {
+    const response = await fetch(`http://localhost:5000/api/registrations/${studentId}`);
+    const result = await response.json();
+    if(result.success) {
+      registrations = result.data; // Database Data-வை Array-க்கு மாத்துறோம்
+      renderMain(); // UI-ஐ update பண்றோம்
+    }
+  } catch (error) {
+    console.error("Error fetching data:", error);
   }
-  // Return default OD requests if no stored data
-  return [
-    {
-      id: "od-001",
-      studentId: "stu-001",
-      eventId: "ev-001",
-      department: "CSE",
-      status: "approved",
-      createdAt: "2026-04-08",
-    },
-  ];
 }
 
-function saveEventsToLocalStorage() {
-  localStorage.setItem("events", JSON.stringify(events));
-}
+// இனிமே ஆரம்பத்துல Array empty-ஆக இருக்கும், Database-ல இருந்து தான் வரும்!
+function loadRegistrationsFromLocalStorage() { return []; }
+function loadODRequestsFromLocalStorage() { return []; }
 
 function loadEventsFromLocalStorage() {
   const storedEvents = localStorage.getItem("events");
@@ -906,31 +865,18 @@ function attachStudentEventHandlers(profile) {
         return;
       }
       
-      // Create event registration (goes to event hosting department)
-      const registrationId = `reg-${Date.now()}`;
-      registrations.push({
-        id: registrationId,
-        eventId,
-        studentId: profile.id,
-        status: "approved",  // Automatically approved for event registration
-        odApproved: false,
-      });
-      saveRegistrationsToLocalStorage();
+      // =======================================================
+      // 🚀 PUDHU API CONNECTION (Database-க்கு அனுப்புறோம்)
+      // =======================================================
+      showToast("Saving Registration to Database...");
       
-      // Automatically create OD request (goes to student's own department)
-      odRequests.push({
-        id: `od-${Date.now()}`,
-        studentId: profile.id,
-        eventId,
-        registrationId,
-        department: profile.department,  // Student's own department
-        status: "pending",
-        createdAt: new Date().toISOString().split('T')[0],
+      // apiRegisterAndOD function-ஐ call பண்றோம் (இது server.js-க்கு data அனுப்பும்)
+      apiRegisterAndOD(eventId, profile.id, profile.department).then(() => {
+          // Database-ல save ஆனதும், மறுபடியும் புது data-வை எடுத்து UI-ஐ update பண்றோம்
+          fetchStudentDataFromDB(profile.id);
       });
-      saveODRequestsToLocalStorage();
-      
-      showToast("Event registered successfully. OD request sent to your department.");
-      renderMain();
+      // =======================================================
+
     });
   });
 
@@ -940,7 +886,7 @@ function attachStudentEventHandlers(profile) {
       const idx = registrations.findIndex((r) => r.id === regId);
       if (idx >= 0) {
         registrations.splice(idx, 1);
-        saveRegistrationsToLocalStorage();
+        saveRegistrationsToLocalStorage(); // (Note: இதையும் future-ல Cancel API-க்கு மாத்தணும்)
         showToast("Your registration has been cancelled.");
         renderMain();
       }
@@ -2005,7 +1951,6 @@ function renderLogin() {
 
   attachLoginHandlers();
 }
-
 function attachLoginHandlers() {
   const roleTabs = document.querySelectorAll(".role-tab");
   const roleInput = document.getElementById("roleInput");
@@ -2013,62 +1958,90 @@ function attachLoginHandlers() {
   const userIdInput = document.getElementById("userId");
   const passwordInput = document.getElementById("password");
 
+  // Role மாத்துற UI Code
   roleTabs.forEach((tab) => {
     tab.addEventListener("click", () => {
       roleTabs.forEach((t) => t.classList.remove("active"));
       tab.classList.add("active");
       const role = tab.getAttribute("data-role");
       roleInput.value = role;
-      if (role === roles.STUDENT) {
-        userIdInput.placeholder = "Enter your User ID";
-        passwordInput.placeholder = "Enter your Password";
-      } else if (role === roles.DEPT_ADMIN) {
-        userIdInput.placeholder = "Enter your User ID";
-        passwordInput.placeholder = "Enter your Password";
-      } else {
-        userIdInput.placeholder = "Enter your User ID";
-        passwordInput.placeholder = "Enter your Password";
-      }
+      userIdInput.placeholder = "Enter your User ID";
+      passwordInput.placeholder = "Enter your Password";
     });
   });
 
   if (loginForm) {
-    loginForm.addEventListener("submit", (e) => {
+    loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const role = roleInput.value;
       const userId = userIdInput.value.trim();
       const password = passwordInput.value.trim();
-      let user = null;
 
+      // =======================================================
+      // 🚀 STUDENT LOGIN (Database-ல் செக் செய்ய)
+      // =======================================================
       if (role === roles.STUDENT) {
-        user = students.find(
-          (s) => s.userId === userId && s.password === password
-        );
-      } else if (role === roles.DEPT_ADMIN) {
-        user = departmentAdmins.find(
-          (a) => a.userId === userId && a.password === password
-        );
-      } else if (role === roles.SUPER_ADMIN) {
-        if (superAdmin.userId === userId && superAdmin.password === password) {
-          user = superAdmin;
+        try {
+          showToast("Logging in...");
+          
+          const response = await fetch('http://localhost:5000/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, password, role })
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            currentUser = data.user;
+            currentSection = null;
+            createAppShell();
+            renderSidebar();
+            renderMain();
+            showToast(`Welcome back, ${currentUser.name.split(" ")[0]}! 🟢`);
+            
+            // Database-ல இருந்து Event & Registration Data-வை எடுக்க
+            if (typeof fetchStudentDataFromDB === "function") {
+              fetchStudentDataFromDB(currentUser.id);
+            }
+          } else {
+            showToast("❌ " + data.message);
+          }
+        } catch (error) {
+          console.error("Login API Error:", error);
+          showToast("Server Connection Failed! 🔴");
         }
-      }
+      } 
+      // =======================================================
+      // 👔 ADMIN LOGIN (இப்போதைக்கு Hardcode-ல் செக் செய்ய)
+      // =======================================================
+      else {
+        let user = null;
+        if (role === roles.DEPT_ADMIN) {
+          user = departmentAdmins.find(
+            (a) => a.userId === userId && a.password === password
+          );
+        } else if (role === roles.SUPER_ADMIN) {
+          if (superAdmin.userId === userId && superAdmin.password === password) {
+            user = superAdmin;
+          }
+        }
 
-      if (!user) {
-        showToast("Invalid credentials for selected role.");
-        return;
-      }
+        if (!user) {
+          showToast("Invalid credentials for Admin role.");
+          return;
+        }
 
-      currentUser = user;
-      currentSection = null;
-      createAppShell();
-      renderSidebar();
-      renderMain();
-      showToast(`Welcome, ${user.name.split(" ")[0]}!`);
+        currentUser = user;
+        currentSection = null;
+        createAppShell();
+        renderSidebar();
+        renderMain();
+        showToast(`Welcome, ${user.name.split(" ")[0]}!`);
+      }
     });
   }
 }
-
 function renderProfileSettingsSection(user) {
   let additionalFields = "";
   if (user.role === roles.STUDENT) {
@@ -2137,15 +2110,18 @@ function renderProfileSettingsSection(user) {
     </div>
   `;
 }
-
 function attachProfileSettingsHandlers(user) {
   const form = document.getElementById("profileSettingsForm");
   if (form) {
-    form.addEventListener("submit", (e) => {
+    form.addEventListener("submit", async (e) => { // async சேர்த்திருக்கேன்
       e.preventDefault();
-      user.name = document.getElementById("profileName").value;
-      user.email = document.getElementById("profileEmail").value;
-      user.phone = document.getElementById("profilePhone").value;
+
+      // எல்லா புது டேட்டாவையும் ஒரு Object-ல எடுக்குறோம்
+      const updatedData = {
+        name: document.getElementById("profileName").value,
+        email: document.getElementById("profileEmail").value,
+        phone: document.getElementById("profilePhone").value,
+      };
 
       if (user.role === roles.STUDENT) {
         const dept = document.getElementById("profileDept").value;
@@ -2153,22 +2129,48 @@ function attachProfileSettingsHandlers(user) {
           showToast("Please select a valid department.");
           return;
         }
-        user.registerNumber = document.getElementById("profileRegNo").value;
-        user.year = document.getElementById("profileYear").value;
-        user.department = dept;
-        user.classIncharge = document.getElementById("profileIncharge").value;
+        updatedData.registerNumber = document.getElementById("profileRegNo").value;
+        updatedData.year = document.getElementById("profileYear").value;
+        updatedData.department = dept;
+        updatedData.classIncharge = document.getElementById("profileIncharge").value;
       } else if (user.role === roles.DEPT_ADMIN) {
         const dept = document.getElementById("profileDept").value;
         if (!isValidDepartment(dept)) {
           showToast("Please select a valid department.");
           return;
         }
-        user.department = dept;
+        updatedData.department = dept;
       }
 
-      showToast("Profile updated successfully!");
-      renderSidebar();
-      renderMain();
+      // ==========================================
+      // 🚀 DATABASE-க்கு அனுப்புறோம்!
+      // ==========================================
+      try {
+        showToast("Saving to Database... ⏳");
+        const response = await fetch('http://localhost:5000/api/user/update', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id || user.userId, // உங்க DB-ல இருக்குற ID
+            updatedData: updatedData
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // லோக்கல் மெமரியையும் அப்டேட் பண்றோம்
+          Object.assign(user, updatedData); 
+          showToast("Profile updated in Database! ✅");
+          renderSidebar();
+          renderMain();
+        } else {
+          showToast("❌ Error: " + result.message);
+        }
+      } catch (error) {
+        console.error("Update Error:", error);
+        showToast("Server Connection Failed! 🔴");
+      }
     });
   }
 }
@@ -2176,5 +2178,11 @@ function attachProfileSettingsHandlers(user) {
 document.addEventListener("DOMContentLoaded", () => {
   initPosterModal();
   renderLogin();
-});
 
+  // =======================================================
+  // 🚀 PUDHU API CONNECTION (Database-ல இருந்து Data எடுக்க)
+  // =======================================================
+  if (currentUser && currentUser.role === roles.STUDENT) {
+    fetchStudentDataFromDB(currentUser.id);
+  }
+});

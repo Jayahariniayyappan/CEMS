@@ -1,64 +1,162 @@
-require('dotenv').config(); // உங்க .env file-ல் இருந்து DB URL-ஐ எடுக்க இது தேவை
+require('dotenv').config();
 const mongoose = require('mongoose');
-const User = require('./models/User'); // Path சரியா இருக்கணும்
+const bcrypt = require('bcryptjs');
+const User = require('./models/User');
 
-// நீங்க அனுப்புன அதே Hardcoded Data 
-const students = [
-  {
-    userId: "stu001",
-    password: "student123",
-    role: "student",
-    name: "Harini A",
-    registerNumber: "CSE2023-001",
-    department: "CSE",
-    year: "III",
-    email: "harini28.egspec@gmail.com",
-    phone: "+91 98765 00011",
-    classIncharge: "Ms.Kalaivani",
-  },
-  {
-    userId: "stu002",
-    password: "student123",
-    role: "student",
-    name: "Lakshana S",
-    registerNumber: "ECE2023-014",
-    department: "ECE",
-    year: "II",
-    email: "lakshana@gmail.com",
-    phone: "+91 98765 00012",
-    classIncharge: "Ms.Mohanapriya",
-  },
-  {
-    userId: "stu003",
-    password: "student123",
-    role: "student",
-    name: "Sahithyalakshmi S",
-    registerNumber: "MECH2023-023",
-    department: "MECH",
-    year: "III",
-    email: "sahithya@gmail.com",
-    phone: "+91 98765 00013",
-    classIncharge: "Ms.Ranjani",
-  },
-];
+const mongoURI = process.env.MONGO_URI;
 
-// MongoDB-யோட Connect பண்ணி Data-வை Save பண்றோம்
-const mongoURI = "mongodb+srv://harini28egspec_db_user:oxQzpQMmafPAGsaj@cluster0.xrilt8p.mongodb.net/cems?retryWrites=true&w=majority";
-
-mongoose.connect(mongoURI)
-.then(async () => {
+const seedUsers = async () => {
+  await mongoose.connect(mongoURI);
   console.log("🟢 MongoDB Connected for Seeding!");
-  
-  // பழைய Data ஏதாச்சும் இருந்தா அத அழிச்சிட்டு புதுசா ஏத்துறோம்
-  await User.deleteMany({ role: "student" }); 
-  
-  // புது Data-வை Database-ல Insert பண்றோம்
+
+  // பழைய students அழிக்கணும்
+  await User.deleteMany({ role: "student" });
+  console.log("🗑️ Old students deleted!");
+
+  // ==========================================
+  // CSE Department - 10 Sample Students
+  // 8 Regular (CSR) + 2 Lateral (CSRL)
+  // userId = Roll Number
+  // Default password = Roll Number itself
+  // ==========================================
+
+  const students = [
+    // REGULAR STUDENTS (8208E24CSR001 - 008)
+    {
+      userId: "8208E24CSR001",
+      password: await bcrypt.hash("8208E24CSR001", 10),
+      role: "student",
+      name: "Harini A",
+      registerNumber: "8208E24CSR001",
+      department: "CSE",
+      year: "I",
+      email: "harini@gmail.com",
+      phone: "+91 98765 00001",
+      classIncharge: "Ms.Kalaivani",
+    },
+    {
+      userId: "8208E24CSR002",
+      password: await bcrypt.hash("8208E24CSR002", 10),
+      role: "student",
+      name: "Arun B",
+      registerNumber: "8208E24CSR002",
+      department: "CSE",
+      year: "I",
+      email: "arun@gmail.com",
+      phone: "+91 98765 00002",
+      classIncharge: "Ms.Kalaivani",
+    },
+    {
+      userId: "8208E24CSR003",
+      password: await bcrypt.hash("8208E24CSR003", 10),
+      role: "student",
+      name: "Divya C",
+      registerNumber: "8208E24CSR003",
+      department: "CSE",
+      year: "I",
+      email: "divya@gmail.com",
+      phone: "+91 98765 00003",
+      classIncharge: "Ms.Kalaivani",
+    },
+    {
+      userId: "8208E24CSR004",
+      password: await bcrypt.hash("8208E24CSR004", 10),
+      role: "student",
+      name: "Karthik D",
+      registerNumber: "8208E24CSR004",
+      department: "CSE",
+      year: "I",
+      email: "karthik@gmail.com",
+      phone: "+91 98765 00004",
+      classIncharge: "Ms.Kalaivani",
+    },
+    {
+      userId: "8208E24CSR005",
+      password: await bcrypt.hash("8208E24CSR005", 10),
+      role: "student",
+      name: "Meena E",
+      registerNumber: "8208E24CSR005",
+      department: "CSE",
+      year: "I",
+      email: "meena@gmail.com",
+      phone: "+91 98765 00005",
+      classIncharge: "Ms.Kalaivani",
+    },
+    {
+      userId: "8208E24CSR006",
+      password: await bcrypt.hash("8208E24CSR006", 10),
+      role: "student",
+      name: "Ravi F",
+      registerNumber: "8208E24CSR006",
+      department: "CSE",
+      year: "I",
+      email: "ravi@gmail.com",
+      phone: "+91 98765 00006",
+      classIncharge: "Ms.Kalaivani",
+    },
+    {
+      userId: "8208E24CSR007",
+      password: await bcrypt.hash("8208E24CSR007", 10),
+      role: "student",
+      name: "Sathya G",
+      registerNumber: "8208E24CSR007",
+      department: "CSE",
+      year: "I",
+      email: "sathya@gmail.com",
+      phone: "+91 98765 00007",
+      classIncharge: "Ms.Kalaivani",
+    },
+    {
+      userId: "8208E24CSR008",
+      password: await bcrypt.hash("8208E24CSR008", 10),
+      role: "student",
+      name: "Vignesh H",
+      registerNumber: "8208E24CSR008",
+      department: "CSE",
+      year: "I",
+      email: "vignesh@gmail.com",
+      phone: "+91 98765 00008",
+      classIncharge: "Ms.Kalaivani",
+    },
+
+    // LATERAL ENTRY STUDENTS (8208E24CSRL001 - 002)
+    {
+      userId: "8208E24CSRL001",
+      password: await bcrypt.hash("8208E24CSRL001", 10),
+      role: "student",
+      name: "Priya I",
+      registerNumber: "8208E24CSRL001",
+      department: "CSE",
+      year: "II",
+      email: "priya.lateral@gmail.com",
+      phone: "+91 98765 00009",
+      classIncharge: "Ms.Kalaivani",
+    },
+    {
+      userId: "8208E24CSRL002",
+      password: await bcrypt.hash("8208E24CSRL002", 10),
+      role: "student",
+      name: "Surya J",
+      registerNumber: "8208E24CSRL002",
+      department: "CSE",
+      year: "II",
+      email: "surya.lateral@gmail.com",
+      phone: "+91 98765 00010",
+      classIncharge: "Ms.Kalaivani",
+    },
+  ];
+
   await User.insertMany(students);
-  
-  console.log("🚀 All Students added to Database Successfully!");
-  process.exit(); // வேலை முடிஞ்சதும் Script-ஐ close பண்ணிடும்
-})
-.catch((err) => {
-  console.error("🔴 Error:", err);
+  console.log(`🚀 ${students.length} CSE Students added Successfully!`);
+  console.log("\n📋 Login Credentials:");
+  console.log("   userId   = Roll Number (eg: 8208E24CSR001)");
+  console.log("   password = Roll Number (same as userId)");
+  console.log("\n   Regular  → 8208E24CSR001 to 8208E24CSR008");
+  console.log("   Lateral  → 8208E24CSRL001 to 8208E24CSRL002");
+  process.exit();
+};
+
+seedUsers().catch((err) => {
+  console.error("🔴 Seed Error:", err);
   process.exit(1);
 });

@@ -2,8 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
+const bcrypt = require('bcryptjs'); // ← இங்க add பண்ணு
 require('dotenv').config();
-
 // Models Import
 const Event = require('./models/Event');
 const User = require('./models/User');
@@ -148,16 +148,19 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const { userId, password, role } = req.body;
     
-    // Database-ல இந்த User இருக்காரான்னு செக் பண்றோம்
-    const user = await User.findOne({ userId, password, role });
+    const user = await User.findOne({ userId, role });
 
     if (!user) {
       return res.status(401).json({ success: false, message: "Invalid UserId or Password!" });
     }
 
-    // Password-ஐ தவிர்த்து மத்த details-ஐ Frontend-க்கு அனுப்புறோம்
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: "Invalid UserId or Password!" });
+    }
+
     const userDetails = {
-      id: user.userId, 
+      id: user.userId,
       role: user.role,
       name: user.name,
       department: user.department,
@@ -170,7 +173,6 @@ app.post('/api/auth/login', async (req, res) => {
 
     res.json({ success: true, user: userDetails });
   } catch (error) {
-    console.error("Login API Error:", error);
     res.status(500).json({ success: false, message: "Server Error during login" });
   }
 });

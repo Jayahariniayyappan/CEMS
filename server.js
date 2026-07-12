@@ -147,16 +147,29 @@ app.get('/api/registrations/:studentId', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { userId, password, role } = req.body;
-    
+
+    console.log("📥 Login Request:", { userId, password, role });
+
     const user = await User.findOne({ userId, role });
 
+    console.log("👤 User Found:", user);
+
     if (!user) {
-      return res.status(401).json({ success: false, message: "Invalid UserId or Password!" });
+      return res.status(401).json({
+        success: false,
+        message: "Invalid UserId or Password!"
+      });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
+
+    console.log("🔑 Password Match:", isMatch);
+
     if (!isMatch) {
-      return res.status(401).json({ success: false, message: "Invalid UserId or Password!" });
+      return res.status(401).json({
+        success: false,
+        message: "Invalid UserId or Password!"
+      });
     }
 
     const userDetails = {
@@ -172,8 +185,13 @@ app.post('/api/auth/login', async (req, res) => {
     };
 
     res.json({ success: true, user: userDetails });
+
   } catch (error) {
-    res.status(500).json({ success: false, message: "Server Error during login" });
+    console.error("❌ Login Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server Error during login"
+    });
   }
 });
 

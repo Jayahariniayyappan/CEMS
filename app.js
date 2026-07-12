@@ -187,7 +187,7 @@ const superAdmin = {
 async function apiRegisterAndOD(eventId, studentId, department) {
   try {
     // 1. Save Registration
-    const regRes = await fetch('http://localhost:5000/api/register', {
+    const regRes = await fetch(`${API_URL}/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ eventId, studentId })
@@ -196,7 +196,7 @@ async function apiRegisterAndOD(eventId, studentId, department) {
 
     if(regData.success) {
       // 2. Save OD Request 
-      const odRes = await fetch('http://localhost:5000/api/od-request', {
+      const odRes = await fetch(`${API_URL}/od-request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -220,7 +220,7 @@ async function apiRegisterAndOD(eventId, studentId, department) {
 
 async function fetchStudentDataFromDB(studentId) {
   try {
-    const response = await fetch(`http://localhost:5000/api/registrations/${studentId}`);
+    const response = await fetch(`${API_URL}/registrations/${studentId}`);
     const result = await response.json();
     if(result.success) {
       registrations = result.data; // Database Data-வை Array-க்கு மாத்துறோம்
@@ -1984,7 +1984,7 @@ function attachLoginHandlers() {
         try {
           showToast("Logging in...");
           
-          const response = await fetch('http://localhost:5000/api/auth/login', {
+          const response = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId, password, role })
@@ -2147,7 +2147,7 @@ function attachProfileSettingsHandlers(user) {
       // ==========================================
       try {
         showToast("Saving to Database... ⏳");
-        const response = await fetch('http://localhost:5000/api/user/update', {
+        const response = await fetch(`${API_URL}/user/update`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

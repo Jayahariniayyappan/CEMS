@@ -1,6 +1,6 @@
 // Simple frontend-only SPA for College Event Management
 // Uses in-memory dummy data and role-based views (Student, Department Admin, Super Admin)
-
+const API_URL = "/api";
 const roles = {
   STUDENT: "student",
   DEPT_ADMIN: "dept_admin",

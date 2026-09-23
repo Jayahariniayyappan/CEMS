@@ -881,17 +881,23 @@ function attachStudentEventHandlers(profile) {
   });
 
   document.querySelectorAll(".btn-cancel-registration").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const regId = btn.getAttribute("data-reg-id");
-      const idx = registrations.findIndex((r) => r.id === regId);
-      if (idx >= 0) {
-        registrations.splice(idx, 1);
-        saveRegistrationsToLocalStorage(); // (Note: இதையும் future-ல Cancel API-க்கு மாத்தணும்)
-        showToast("Your registration has been cancelled.");
-        renderMain();
-      }
-    });
+  btn.addEventListener("click", () => {
+    const regId = btn.getAttribute("data-reg-id");
+
+    const idx = registrations.findIndex(
+  (r) => String(r.id) === String(regId)
+);
+
+    if (idx >= 0) {
+      registrations.splice(idx, 1);
+      saveRegistrationsToLocalStorage();
+
+      showToast("Your registration has been cancelled.");
+
+      renderMain();
+    }
   });
+});
 }
 
 function renderDeptAdminDashboard(container) {

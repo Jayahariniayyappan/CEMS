@@ -34,7 +34,7 @@ mongoose.connect(mongoURI)
 // ==========================================
 
 // ✅ Root route - index.html serve பண்ணும்
-app.get('/', (req, res) => {
+cancel('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
@@ -138,6 +138,34 @@ app.get('/api/registrations/:studentId', async (req, res) => {
   } catch (error) {
     console.error("\n❌ Fetch Registrations Error:", error);
     res.status(500).json({ success: false, message: "Error fetching data", error });
+  }
+});
+app.delete('/api/registrations/:registrationId', async (req, res) => {
+  try {
+    const registrationId = req.params.registrationId;
+
+    const deletedRegistration =
+      await Registration.findByIdAndDelete(registrationId);
+
+    if (!deletedRegistration) {
+      return res.status(404).json({
+        success: false,
+        message: "Registration not found"
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Registration cancelled successfully"
+    });
+
+  } catch (error) {
+    console.error("❌ Cancel Registration Error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error"
+    });
   }
 });
 

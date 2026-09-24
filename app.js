@@ -791,7 +791,7 @@ function renderStudentRegisteredSection(profile) {
                     <td>
                       <button
                         class="btn btn-small btn-danger btn-cancel-registration"
-                        data-reg-id="${r.id}"
+                        data-reg-id="${r._id || r.id}"
                       >
                         Cancel Registration
                       </button>
@@ -880,21 +880,44 @@ function attachStudentEventHandlers(profile) {
     });
   });
 
-  document.querySelectorAll(".btn-cancel-registration").forEach((btn) => {
-  btn.addEventListener("click", () => {
+document.querySelectorAll(".btn-cancel-registration").forEach((btn) => {
+  btn.addEventListener("click", async () => {
     const regId = btn.getAttribute("data-reg-id");
 
     const idx = registrations.findIndex(
-  (r) => String(r.id) === String(regId)
-);
+      (r) => String(r._id || r.id) === String(regId)
+    );
 
-    if (idx >= 0) {
+    if (idx < 0) {
+      showToast("Registration not found.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/api/registrations/${encodeURIComponent(regId)}`,
+        {
+          method: "DELETE"
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Failed to cancel registration.");
+      }
+
+      // Remove only the selected registration from the frontend
       registrations.splice(idx, 1);
       saveRegistrationsToLocalStorage();
 
       showToast("Your registration has been cancelled.");
 
       renderMain();
+
+    } catch (error) {
+      console.error("Cancel registration error:", error);
+      showToast("Failed to cancel registration. Please try again.");
     }
   });
 });

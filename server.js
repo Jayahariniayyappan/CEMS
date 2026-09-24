@@ -34,7 +34,7 @@ mongoose.connect(mongoURI)
 // ==========================================
 
 // ✅ Root route - index.html serve பண்ணும்
-cancel('/', (req, res) => {
+app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
